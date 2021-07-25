@@ -66,8 +66,19 @@ namespace AppointmentStoreReproBug
 
             foreach (AppointmentCalendar apptCal in calendars)
             {
-                await apptCal.RegisterSyncManagerAsync();
-                bool syncStarted = await apptCal.SyncManager.SyncAsync();
+                bool syncStarted = false;
+
+                try
+                {
+                    await apptCal.RegisterSyncManagerAsync();
+                    syncStarted = await apptCal.SyncManager.SyncAsync();
+                }
+                catch (Exception ex)
+                {
+                    WriteToResults($"Exception registering or syncing {apptCal.DisplayName}");
+                    WriteToResults(ex.Message);
+
+                }
 
                 if (syncStarted == true)
                     WriteToResults($"Successfully started sync of {apptCal.DisplayName}");
