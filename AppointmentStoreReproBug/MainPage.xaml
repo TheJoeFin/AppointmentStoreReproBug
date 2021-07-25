@@ -6,7 +6,6 @@
     xmlns:local="using:AppointmentStoreReproBug"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="{ThemeResource SystemControlChromeMediumAcrylicWindowMediumBrush}"
-    Loaded="Page_Loaded"
     mc:Ignorable="d">
 
     <Grid>
@@ -17,32 +16,42 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="4*" />
+            <ColumnDefinition Width="6*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Viewbox Grid.Row="0" Grid.Column="0">
-            <TextBlock
-                Grid.Row="0"
-                Grid.Column="0"
-                Margin="16"
-                HorizontalAlignment="Center"
-                Style="{StaticResource HeaderTextBlockStyle}"
-                Text="Appointment Store Repro App" />
-        </Viewbox>
-
-        <StackPanel
+        <RelativePanel
             Grid.Row="0"
             Grid.Column="1"
-            HorizontalAlignment="Center"
-            Orientation="Horizontal"
-            Spacing="30">
-            <TextBlock VerticalAlignment="Center" Text="Get Calendar Access" />
+            HorizontalAlignment="Stretch">
+            <TextBox
+                x:Name="NewApptSubjectTextBox"
+                PlaceholderText="Appointment Subject"
+                RelativePanel.AlignLeftWithPanel="True"
+                RelativePanel.AlignRightWith="SpacerBorder" />
+            <Border x:Name="SpacerBorder" RelativePanel.LeftOf="NewApptCalPicker" />
+            <CalendarDatePicker x:Name="NewApptCalPicker" RelativePanel.LeftOf="NewApptAddButton" />
+            <Button
+                x:Name="NewApptAddButton"
+                Click="NewApptAddButton_Click"
+                RelativePanel.AlignHorizontalCenterWithPanel="True"
+                Style="{ThemeResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <SymbolIcon Symbol="Add" />
+                    <TextBlock Text="Add Appointment" />
+                </StackPanel>
+            </Button>
+            <TextBlock
+                Margin="6"
+                VerticalAlignment="Center"
+                RelativePanel.LeftOf="GetAccessButton"
+                Text="Establish AppointmentStore" />
             <Button
                 x:Name="GetAccessButton"
                 Click="GetAccessButton_Click"
-                Content="Get" />
-        </StackPanel>
+                Content="Get"
+                RelativePanel.AlignRightWithPanel="True" />
+        </RelativePanel>
 
         <Border
             Grid.Row="1"
@@ -56,12 +65,17 @@
             Padding="10"
             Style="{StaticResource SubheaderTextBlockStyle}"
             Text="Results" />
-        <TextBlock
-            x:Name="ResultsTextBox"
+        <ScrollViewer
             Grid.Row="2"
             Grid.Column="1"
-            Padding="20"
-            Text="test" />
+            ScrollViewer.ZoomMode="Disabled">
+            <TextBlock
+                x:Name="ResultsTextBox"
+                Padding="20"
+                FontFamily="Cascadia Mono"
+                FontSize="16"
+                Text="&gt;" />
+        </ScrollViewer>
 
     </Grid>
 </Page>

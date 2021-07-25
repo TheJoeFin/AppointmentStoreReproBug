@@ -22,23 +22,29 @@ namespace AppointmentStoreReproBug
             InitializeComponent();
         }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e)
-        {
-        }
-
         private async Task GetAppointmentAccess()
         {
-            ApptStore = await AppointmentManager.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
             if (ApptStore != null)
             {
-                ApptStore.ChangeTracker.Enable();
+                ResultsTextBox.Text += "\n> Appointment Store Exists";
+            }
+            else
+            {
+                ApptStore = await AppointmentManager.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
+            }
+
+            if (ApptStore != null)
+            {
+                if (ApptStore.ChangeTracker.IsTracking == false)
+                    ApptStore.ChangeTracker.Enable();
+                ApptStore.StoreChanged -= ApptStore_StoreChanged;
                 ApptStore.StoreChanged += ApptStore_StoreChanged;
-                ResultsTextBox.Text += "\nGained Appointment Access";
+                ResultsTextBox.Text += "\n> Established Appointment Store and Change Tracker";
             }
             else
             {
                 // show error, unable to access appointments
-                ResultsTextBox.Text += "\nFailed to get Appointment Access";
+                ResultsTextBox.Text += "\n> Failed to get Appointment Access";
             }
         }
 
@@ -54,7 +60,7 @@ namespace AppointmentStoreReproBug
                 () =>
                 {
                     // update your UI here
-                    ResultsTextBox.Text += $"\n{chg.Appointment.Subject} {chg.ChangeType}";
+                    ResultsTextBox.Text += $"\n> {chg.Appointment.Subject} \t | \t{chg.ChangeType}";
                 });
             }
 
@@ -64,7 +70,28 @@ namespace AppointmentStoreReproBug
         private async void GetAccessButton_Click(object sender, RoutedEventArgs e)
         {
             await GetAppointmentAccess();
+        }
 
+        private async void NewApptAddButton_Click(object sender, RoutedEventArgs e)
+        {
+            DateTimeOffset newDate = NewApptCalPicker.Date.Value;
+            Appointment newAppt = new Appointment()
+            {
+                StartTime = new DateTimeOffset(newDate.Year, newDate.Month, newDate.Day, 12, 0, 0, DateTimeOffset.Now.Offset),
+                AllDay = true,
+                Subject = NewApptSubjectTextBox.Text
+            };
+
+            if (ApptStore == null)
+                await GetAppointmentAccess();
+
+            string returnedID = await ApptStore.ShowEditNewAppointmentAsync(newAppt);
+
+            if (string.IsNullOrEmpty(returnedID) == false)
+            {
+                NewApptSubjectTextBox.ClearValue(TextBox.TextProperty);
+                NewApptCalPicker.ClearValue(CalendarDatePicker.DateProperty);
+            }
         }
     }
 }
