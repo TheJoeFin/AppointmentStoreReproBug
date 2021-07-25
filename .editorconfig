@@ -2,3 +2,6 @@
 
 # IDE0011: Add braces
 csharp_prefer_braces = when_multiline
+
+# IDE0100: Remove redundant equality
+dotnet_diagnostic.IDE0100.severity = none
