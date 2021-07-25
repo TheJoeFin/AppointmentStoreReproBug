@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Appointments;
 using Windows.UI.Core;
@@ -26,11 +27,20 @@ namespace AppointmentStoreReproBug
         {
             if (ApptStore != null)
             {
-                ResultsTextBox.Text += "\n> Appointment Store Exists";
+                WriteToResults("Appointment Store Exists");
             }
             else
             {
-                ApptStore = await AppointmentManager.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
+                try
+                {
+                    ApptStore = await AppointmentManager.RequestStoreAsync(AppointmentStoreAccessType.AllCalendarsReadWrite);
+                }
+                catch (Exception ex)
+                {
+                    WriteToResults("Failed to get Appointment Store");
+                    WriteToResults(ex.Message);
+                    return;
+                }
             }
 
             if (ApptStore != null)
@@ -39,13 +49,47 @@ namespace AppointmentStoreReproBug
                     ApptStore.ChangeTracker.Enable();
                 ApptStore.StoreChanged -= ApptStore_StoreChanged;
                 ApptStore.StoreChanged += ApptStore_StoreChanged;
-                ResultsTextBox.Text += "\n> Established Appointment Store and Change Tracker";
+                WriteToResults("Established Appointment Store and Change Tracker");
+
+                await SyncCalendars();
             }
             else
             {
                 // show error, unable to access appointments
                 ResultsTextBox.Text += "\n> Failed to get Appointment Access";
             }
+        }
+
+        private async Task SyncCalendars()
+        {
+            IReadOnlyList<AppointmentCalendar> calendars = await ApptStore.FindAppointmentCalendarsAsync();
+
+            foreach (AppointmentCalendar apptCal in calendars)
+            {
+                await apptCal.RegisterSyncManagerAsync();
+                bool syncStarted = await apptCal.SyncManager.SyncAsync();
+
+                if (syncStarted == true)
+                    WriteToResults($"Successfully started sync of {apptCal.DisplayName}");
+                else
+                    WriteToResults($"Failed to start sync of {apptCal.DisplayName}");
+
+            }
+        }
+
+        public void WriteToResults(string stringToWrite)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append('\n');
+            if (stringToWrite.Length > 1 && stringToWrite[0] != '>')
+                sb.Append("> ");
+            sb.Append(stringToWrite);
+
+            Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+            () =>
+            {
+                ResultsTextBox.Text += sb.ToString();
+            });
         }
 
         private async void ApptStore_StoreChanged(AppointmentStore sender, AppointmentStoreChangedEventArgs args)
@@ -56,12 +100,7 @@ namespace AppointmentStoreReproBug
 
             foreach (AppointmentStoreChange chg in changes)
             {
-                Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-                () =>
-                {
-                    // update your UI here
-                    ResultsTextBox.Text += $"\n> {chg.Appointment.Subject} \t | \t{chg.ChangeType}";
-                });
+                WriteToResults($"{ chg.Appointment.Subject} \t | \t{ chg.ChangeType}");
             }
 
             changeReader.AcceptChanges();
