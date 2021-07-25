@@ -74,6 +74,7 @@
                 Padding="20"
                 FontFamily="Cascadia Mono"
                 FontSize="16"
+                IsTextSelectionEnabled="True"
                 Text="&gt;" />
         </ScrollViewer>
 
