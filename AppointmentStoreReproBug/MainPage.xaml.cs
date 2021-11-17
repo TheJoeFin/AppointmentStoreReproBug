@@ -16,7 +16,8 @@ namespace AppointmentStoreReproBug
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        public AppointmentStore ApptStore { get; set; }
+#nullable enable
+        public AppointmentStore? ApptStore { get; set; } = null;
 
         public MainPage()
         {
@@ -51,6 +52,7 @@ namespace AppointmentStoreReproBug
                 ApptStore.StoreChanged += ApptStore_StoreChanged;
                 WriteToResults("Established Appointment Store and Change Tracker");
 
+                if (SyncCalendarsCheckBox.IsChecked is bool shouldSyncCalendars && shouldSyncCalendars)
                 await SyncCalendars();
             }
             else
@@ -62,6 +64,9 @@ namespace AppointmentStoreReproBug
 
         private async Task SyncCalendars()
         {
+            if (ApptStore == null)
+                return;
+
             IReadOnlyList<AppointmentCalendar> calendars = await ApptStore.FindAppointmentCalendarsAsync();
 
             foreach (AppointmentCalendar apptCal in calendars)
@@ -90,7 +95,7 @@ namespace AppointmentStoreReproBug
 
         public void WriteToResults(string stringToWrite)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append('\n');
             if (stringToWrite.Length > 1 && stringToWrite[0] != '>')
                 sb.Append("> ");
@@ -105,6 +110,9 @@ namespace AppointmentStoreReproBug
 
         private async void ApptStore_StoreChanged(AppointmentStore sender, AppointmentStoreChangedEventArgs args)
         {
+            if (ApptStore == null)
+                return;
+
             AppointmentStoreChangeTracker changeTracker = ApptStore.GetChangeTracker("");
             AppointmentStoreChangeReader changeReader = changeTracker.GetChangeReader();
             IReadOnlyList<AppointmentStoreChange> changes = await changeReader.ReadBatchAsync();
@@ -124,8 +132,10 @@ namespace AppointmentStoreReproBug
 
         private async void NewApptAddButton_Click(object sender, RoutedEventArgs e)
         {
-            DateTimeOffset newDate = NewApptCalPicker.Date.Value;
-            Appointment newAppt = new Appointment()
+            if (NewApptCalPicker.Date is not DateTimeOffset newDate)
+                return;
+            
+            Appointment newAppt = new()
             {
                 StartTime = new DateTimeOffset(newDate.Year, newDate.Month, newDate.Day, 12, 0, 0, DateTimeOffset.Now.Offset),
                 AllDay = true,
@@ -135,13 +145,23 @@ namespace AppointmentStoreReproBug
             if (ApptStore == null)
                 await GetAppointmentAccess();
 
-            string returnedID = await ApptStore.ShowEditNewAppointmentAsync(newAppt);
-
-            if (string.IsNullOrEmpty(returnedID) == false)
+            if (ApptStore != null)
             {
-                NewApptSubjectTextBox.ClearValue(TextBox.TextProperty);
-                NewApptCalPicker.ClearValue(CalendarDatePicker.DateProperty);
+                string returnedID = await ApptStore.ShowEditNewAppointmentAsync(newAppt);
+
+                if (string.IsNullOrEmpty(returnedID) == false)
+                {
+                    NewApptSubjectTextBox.ClearValue(TextBox.TextProperty);
+                    NewApptCalPicker.ClearValue(CalendarDatePicker.DateProperty);
+                    NewApptAddButton.IsEnabled = false;
+                }
             }
+        }
+
+        private void NewApptCalPicker_DateChanged(CalendarDatePicker sender, CalendarDatePickerDateChangedEventArgs args)
+        {
+            if (NewApptCalPicker.Date is DateTimeOffset dateTimeOffset)
+                NewApptAddButton.IsEnabled = true;
         }
     }
 }

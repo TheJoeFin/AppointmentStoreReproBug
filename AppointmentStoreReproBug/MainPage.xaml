@@ -30,10 +30,14 @@
                 RelativePanel.AlignLeftWithPanel="True"
                 RelativePanel.AlignRightWith="SpacerBorder" />
             <Border x:Name="SpacerBorder" RelativePanel.LeftOf="NewApptCalPicker" />
-            <CalendarDatePicker x:Name="NewApptCalPicker" RelativePanel.LeftOf="NewApptAddButton" />
+            <CalendarDatePicker
+                x:Name="NewApptCalPicker"
+                DateChanged="NewApptCalPicker_DateChanged"
+                RelativePanel.LeftOf="NewApptAddButton" />
             <Button
                 x:Name="NewApptAddButton"
                 Click="NewApptAddButton_Click"
+                IsEnabled="False"
                 RelativePanel.AlignHorizontalCenterWithPanel="True"
                 Style="{ThemeResource AccentButtonStyle}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -41,7 +45,13 @@
                     <TextBlock Text="Add Appointment" />
                 </StackPanel>
             </Button>
+            <CheckBox
+                x:Name="SyncCalendarsCheckBox"
+                Margin="16,0"
+                Content="Sync Calendars"
+                RelativePanel.LeftOf="EstApptStoreTextBlock" />
             <TextBlock
+                x:Name="EstApptStoreTextBlock"
                 Margin="6"
                 VerticalAlignment="Center"
                 RelativePanel.LeftOf="GetAccessButton"
